@@ -1,8 +1,10 @@
-package it.mikulski.domovoy
+package it.mikulski.domovoy.utils
+
+import java.time.Instant
 
 import it.mikulski.domovoy.model.{Advert, Details}
-import slick.lifted.Tag
 import slick.jdbc.SQLiteProfile.api._
+import slick.lifted.Tag
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -13,9 +15,10 @@ trait DbHandler {
   private val db = Database.forConfig("domovoy")
 
   private val adverts = TableQuery[AdvertsTable]
+  private val details = TableQuery[DetailsTable]
 
-  def createSchema: Future[Unit] = {
-    val action = DBIO.seq(adverts.schema.create)
+  def createSchemaIfMissing: Future[Unit] = {
+    val action = DBIO.seq(adverts.schema.createIfNotExists, details.schema.createIfNotExists)
     db.run(action)
   }
 
@@ -24,8 +27,17 @@ trait DbHandler {
     db.run(action)
   }
 
-  def readAll: Future[Seq[Advert]] = {
+  def advertSeen(advert: Advert): Future[Int] = {
+    val action = adverts.filter(_.id === advert.id).map(_.lastSeenAt).update(Instant.now.toEpochMilli)
+    db.run(action)
+  }
+
+  def allAdverts: Future[Seq[Advert]] = {
     db.run(adverts.result).map(_.map(Advert.from))
+  }
+
+  def allDetails: Future[Seq[Details]] = {
+    db.run(details.result).map(_.map(Details.from))
   }
 
 }

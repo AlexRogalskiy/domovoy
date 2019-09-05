@@ -1,6 +1,7 @@
 package it.mikulski.domovoy
 
 import it.mikulski.domovoy.model.Advert
+import it.mikulski.domovoy.utils.DbHandler
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 
@@ -25,11 +26,15 @@ object ScannerAdvert extends App with DbHandler {
   //adverts.groupBy(_.location).toList.sortBy(_._2.size).reverse.foreach(t => println(s"${t._2.size}\t${t._1}"))
 
   val f = for {
-    _ <- createSchema
-    _ <- Future.sequence(adverts.toSeq.map(insert))
+    _ <- createSchemaIfMissing
+    existing <- allAdverts
+    toInsert = adverts.filterNot(existing.contains)
+    toUpdate = adverts.filter(existing.contains)
+    _ <- Future.sequence(toInsert.toSeq.map(insert))
+    _ <- Future.sequence(toUpdate.toSeq.map(advertSeen))
   } yield ()
 
-  Await.result(f, 1 minute)
+  Await.result(f, 5 minutes)
 
   println("Done.")
 
