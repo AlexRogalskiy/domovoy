@@ -10,7 +10,7 @@ import scala.concurrent.{Await, ExecutionContext, Future}
 import scala.jdk.CollectionConverters._
 import scala.language.postfixOps
 
-object Domovoy extends App with DbHandler {
+object ScannerAdvert extends App with DbHandler {
 
   implicit val ec = ExecutionContext.global
 
