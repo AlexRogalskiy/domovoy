@@ -2,7 +2,7 @@ package it.mikulski.domovoy.utils
 
 import java.time.Instant
 
-import it.mikulski.domovoy.model.{Advert, Details}
+import it.mikulski.domovoy.model.{Advert, Details, Location}
 import slick.jdbc.SQLiteProfile.api._
 import slick.lifted.Tag
 
@@ -16,9 +16,14 @@ trait DbHandler {
 
   private val adverts = TableQuery[AdvertsTable]
   private val details = TableQuery[DetailsTable]
+  private val locations = TableQuery[LocationTable]
 
   def createSchemaIfMissing: Future[Unit] = {
-    val action = DBIO.seq(adverts.schema.createIfNotExists, details.schema.createIfNotExists)
+    val action = DBIO.seq(
+      adverts.schema.createIfNotExists,
+      details.schema.createIfNotExists,
+      locations.schema.createIfNotExists
+    )
     db.run(action)
   }
 
@@ -29,6 +34,11 @@ trait DbHandler {
 
   def insert(dt: Details): Future[Unit] = {
     val action = DBIO.seq(details += Details.toRow(dt))
+    db.run(action)
+  }
+
+  def insert(location: Location): Future[Unit] = {
+    val action = DBIO.seq(locations += Location.toRow(location))
     db.run(action)
   }
 
@@ -43,6 +53,10 @@ trait DbHandler {
 
   def allDetails: Future[Seq[Details]] = {
     db.run(details.result).map(_.map(Details.from))
+  }
+
+  def allLocations: Future[Seq[Location]] = {
+    db.run(locations.result).map(_.map(Location.from))
   }
 
 }
@@ -81,4 +95,16 @@ class DetailsTable(tag: Tag) extends Table[Details.DetailsRow](tag, "details") {
   def features: Rep[Option[String]] = column[Option[String]]("features")
 
   def * = (id, overview, description, features)
+}
+
+class LocationTable(tag: Tag) extends Table[Location.LocationRow](tag, "locations") {
+  def name: Rep[String] = column[String]("name", O.PrimaryKey)
+
+  def address: Rep[String] = column[String]("address")
+
+  def lat: Rep[Double] = column[Double]("lat")
+
+  def lng: Rep[Double] = column[Double]("lng")
+
+  def * = (name, address, lat, lng)
 }
