@@ -27,6 +27,11 @@ trait DbHandler {
     db.run(action)
   }
 
+  def insert(dt: Details): Future[Unit] = {
+    val action = DBIO.seq(details += Details.toRow(dt))
+    db.run(action)
+  }
+
   def advertSeen(advert: Advert): Future[Int] = {
     val action = adverts.filter(_.id === advert.id).map(_.lastSeenAt).update(Instant.now.toEpochMilli)
     db.run(action)
@@ -44,22 +49,36 @@ trait DbHandler {
 
 class AdvertsTable(tag: Tag) extends Table[Advert.AdvertRow](tag, "adverts") {
   def id: Rep[String] = column[String]("id", O.PrimaryKey)
+
   def title: Rep[String] = column[String]("title")
+
   def location: Rep[String] = column[String]("location")
+
   def area: Rep[String] = column[String]("area")
+
   def price: Rep[String] = column[String]("price")
+
   def pricePerMeter: Rep[String] = column[String]("price_per_meter")
+
   def seller: Rep[String] = column[String]("seller")
+
   def url: Rep[String] = column[String]("url")
+
   def firstSeenAt: Rep[Long] = column[Long]("first_seen_at")
+
   def lastSeenAt: Rep[Long] = column[Long]("last_seen_at")
+
   def * = (id, title, location, area, price, pricePerMeter, seller, url, firstSeenAt, lastSeenAt)
 }
 
 class DetailsTable(tag: Tag) extends Table[Details.DetailsRow](tag, "details") {
   def id: Rep[String] = column[String]("id", O.PrimaryKey)
-  def overview: Rep[String] = column[String]("overview")
-  def description: Rep[String] = column[String]("description")
-  def features: Rep[String] = column[String]("features")
+
+  def overview: Rep[Option[String]] = column[Option[String]]("overview")
+
+  def description: Rep[Option[String]] = column[Option[String]]("description")
+
+  def features: Rep[Option[String]] = column[Option[String]]("features")
+
   def * = (id, overview, description, features)
 }

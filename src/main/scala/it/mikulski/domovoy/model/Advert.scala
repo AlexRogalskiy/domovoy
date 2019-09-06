@@ -9,6 +9,8 @@ case class Advert(id: String, title: String, location: String, area: String, pri
     case a: Advert => id == a.id
     case _ => false
   }
+
+  override def hashCode(): Int = id.hashCode()
 }
 
 object Advert {
